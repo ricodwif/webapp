@@ -2,7 +2,7 @@ import streamlit as st
 from sqlalchemy import text
 
 list_maskapai = ['', 'Garuda Indonesia', 'Lion Air', 'Citilink', 'Batik Air', 'Sriwijaya Air', 'NAM Air', 'AirAsia Indonesia', 'Wings Air', 'TransNusa', 'Susi Air']
-status_penerbangan = ['', 'On time', 'Delay', 'Last call']
+list_status_penerbangan = ['', 'On Time', 'Delayed', 'Last call']
 
 conn = st.connection("postgresql", type="sql", 
                      url="postgresql://dwirico08:6wgkTJSMoL1U@ep-curly-salad-29186979.us-east-2.aws.neon.tech/web")
@@ -44,7 +44,7 @@ if page == "Edit Data":
             with st.form(f'data-{id}'):
                 bandara_asal_baru = st.text_input("bandara_asal", bandara_asal_lama)
                 maskapai_baru = st.selectbox("maskapai_name", list_maskapai, index= list_maskapai.index(maskapai_lama) if maskapai_lama in list_maskapai else 0)
-                bandara_tujuan_baru = st.text_input("bandara_tujuan", bandara_tujuan)
+                bandara_tujuan_baru = st.text_input("bandara_tujuan", bandara_tujuan_lama)
                 waktu_keberangkatan_baru = st.time_input("waktu_keberangkatan", waktu_keberangkatan_lama)
                 waktu_sampai_baru = st.time_input("waktu_sampai", waktu_sampai_lama)
                 tanggal_baru = st.date_input("tanggal", tanggal_lama)
