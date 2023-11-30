@@ -11,7 +11,7 @@ with conn.session as session:
                                                        waktu_keberangkatan time, waktu_sampai time, tanggal date, gate_keberangkatan text, status_penerbangan text, layanan_pesawat text, max_capacity varchar);')
     session.execute(query)
 
-st.header('AIRPORT DATA MANAGEMENT SYS')
+st.header('AIRPORT DATA MANAGEMENT SYSTEM')
 page = st.sidebar.selectbox("Pilih Menu", ["View Data","Edit Data"])
 
 if page == "View Data":
