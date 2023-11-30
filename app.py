@@ -1,7 +1,7 @@
 import streamlit as st
 from sqlalchemy import text
 
-maskapai = ['', 'Garuda Indonesia', 'Lion Air', 'Citilink', 'Batik Air', 'Sriwijaya Air', 'NAM Air', 'AirAsia Indonesia', 'Wings Air', 'TransNusa', 'Susi Air']
+list_maskapai = ['', 'Garuda Indonesia', 'Lion Air', 'Citilink', 'Batik Air', 'Sriwijaya Air', 'NAM Air', 'AirAsia Indonesia', 'Wings Air', 'TransNusa', 'Susi Air']
 status_penerbangan = ['', 'On time', 'Delay', 'Last call']
 
 conn = st.connection("postgresql", type="sql", 
@@ -42,13 +42,13 @@ if page == "Edit Data":
 
         with st.expander(f'a.n. {maskapai_lama}'):
             with st.form(f'data-{id}'):
-                bandara_asal_baru = st.text_input("bandara_asal", bandara_asal)
-                maskapai_baru = st.selectbox("maskapai_name",list_maskapai, list_maskapai.index(maskapai_lama))
+                bandara_asal_baru = st.text_input("bandara_asal", bandara_asal_lama)
+                maskapai_baru = st.selectbox("maskapai_name", list_maskapai, index= list_maskapai.index(maskapai_lama) if maskapai_lama in list_maskapai else 0)
                 bandara_tujuan_baru = st.text_input("bandara_tujuan", bandara_tujuan)
-                waktu_keberangkatan_baru = st.time_input("waktu_keberangkatan", waktu_keberangkatan)
-                waktu_sampai_baru = st.time_input("waktu_sampai", waktu_sampai)
+                waktu_keberangkatan_baru = st.time_input("waktu_keberangkatan", waktu_keberangkatan_lama)
+                waktu_sampai_baru = st.time_input("waktu_sampai", waktu_sampai_lama)
                 tanggal_baru = st.date_input("tanggal", tanggal_lama)
-                gate_keberangkatan_baru = st.text_input("gate_keberangkatan", gate_keberangkatan)
+                gate_keberangkatan_baru = st.text_input("gate_keberangkatan", gate_keberangkatan_lama)
                 status_penerbangan_baru = st.selectbox("status_penerbangan", list_status_penerbangan, list_status_penerbangan.index(status_penerbangan_lama))
                 layanan_pesawat_baru = st.multiselect("layanan_pesawat", ['Ekonomi', 'Bisnis', 'First Class'], eval(layanan_pesawat_lama))
                 max_capacity_baru = st.text_input("max_capacity", max_capacity_lama)
