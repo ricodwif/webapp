@@ -10,18 +10,21 @@ with conn.session as session:
     query = text('CREATE TABLE IF NOT EXISTS SCHEDULE (id serial, maskapai varchar, bandara_asal varchar, bandara_tujuan text, \
                                                        waktu_keberangkatan time, waktu_sampai time, tanggal date, gate_keberangkatan text, status_penerbangan text, layanan_pesawat text, max_capacity varchar);')
     session.execute(query)
-st.header('AIRPORT DATA MANAGEMENT SYSTEM')
-page = st.sidebar.selectbox("Pilih Menu", ["View Data","Edit Data","Search Data"])
+st.header('AIRPORT DATA MANAGEMENT SYSTEM ✈️')
+menu_options = ["View Data", "Edit Data", "Search Data"]
+selected_options = st.selectbox("Pilih Menu", menu_options)
 
-if page == "View Data":
+if "View Data" in selected_options:
+    st.header("View Data")
     data = conn.query('SELECT * FROM schedule ORDER By id;', ttl="0").set_index('id')
     data = data.dropna()
-    st.dataframe(data)
-if page == "Edit Data":
+    st.dataframe(data.style.set_properties(**{'background-color': '#C5FFF8', 'color': 'black'}))
+
+if "Edit Data" in selected_options:
+    st.header("Edit Data")
     password_attempt = st.text_input("Masukkan Kata Sandi", type="password")
 
     if password_attempt == "FPKELOMPOK8":
-        # Tampilkan konten edit jika kata sandi benar
         data = conn.query('SELECT * FROM schedule ORDER By id;', ttl="0")
         for _, result in data.iterrows():        
             id = result['id']
@@ -77,5 +80,51 @@ if page == "Edit Data":
                                 st.experimental_rerun()
     else:
         st.error("Kata Sandi Salah")
+if "Search Data" in selected_options:
+    st.header("Search Data")
+    search_option = st.selectbox("Select Search Option", ["Maskapai", "Tanggal", "Bandara Asal", "Bandara Tujuan"])
+    maskapai_search = ""
+    tanggal_search = ""
+    bandara_asal_search = ""
+    bandara_tujuan_search = ""
 
+    if search_option == "Maskapai":
+        maskapai_search = st.text_input("Search by Maskapai:", "")
+    elif search_option == "Tanggal":
+        tanggal_search = st.date_input("Search by Tanggal:")
+    elif search_option == "Bandara Asal":
+        bandara_asal_search = st.text_input("Search by Bandara Asal:")
+    elif search_option == "Bandara Tujuan":
+        bandara_tujuan_search = st.text_input("Search by Bandara Tujuan:")
 
+    if st.button("Search"):
+        conditions = []
+        parameters = {}
+        if search_option == "Maskapai" and maskapai_search:
+            conditions.append("maskapai ILIKE :maskapai")  # Menggunakan ILIKE untuk pencarian case-insensitive
+            parameters['maskapai'] = f'%{maskapai_search}%'
+
+        elif search_option == "Tanggal" and tanggal_search:
+            conditions.append("tanggal = :tanggal")
+            parameters['tanggal'] = tanggal_search
+
+        elif search_option == "Bandara Asal" and bandara_asal_search:
+            conditions.append("bandara_asal ILIKE :bandara_asal")
+            parameters['bandara_asal'] = f'%{bandara_asal_search}%'
+
+        elif search_option == "Bandara Tujuan" and bandara_tujuan_search:
+            conditions.append("bandara_tujuan ILIKE :bandara_tujuan")
+            parameters['bandara_tujuan'] = f'%{bandara_tujuan_search}%'
+
+        if conditions:
+            condition_str = " AND ".join(conditions)
+            query = f"SELECT * FROM schedule WHERE {condition_str} ORDER BY id;"
+            with conn.session as session:
+                result = session.execute(text(query), parameters)
+                data = result.fetchall()
+                if not data:
+                    st.warning("DATA TIDAK DITEMUKAN!")
+                else:
+                    st.dataframe(data)
+        else:
+            st.warning("Pilih opsi pencarian dan isi kolom pencarian.")
