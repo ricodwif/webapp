@@ -1,7 +1,7 @@
 import streamlit as st
 from sqlalchemy import text
 
-list_maskapai = ['', 'Garuda Indonesia', 'Lion Air', 'Citilink', 'Batik Air', 'Sriwijaya Air', 'NAM Air', 'AirAsia Indonesia', 'Wings Air', 'TransNusa', 'Susi Air']
+list_maskapai = ['Garuda Indonesia', 'Lion Air', 'Citilink', 'Batik Air', 'Sriwijaya Air', 'NAM Air', 'AirAsia Indonesia', 'Wings Air', 'TransNusa', 'Susi Air']
 list_status_penerbangan = ['', 'On Time', 'Delayed', 'Last call']
 
 conn = st.connection("postgresql", type="sql", 
@@ -10,25 +10,18 @@ with conn.session as session:
     query = text('CREATE TABLE IF NOT EXISTS SCHEDULE (id serial, maskapai varchar, bandara_asal varchar, bandara_tujuan text, \
                                                        waktu_keberangkatan time, waktu_sampai time, tanggal date, gate_keberangkatan text, status_penerbangan text, layanan_pesawat text, max_capacity varchar);')
     session.execute(query)
-
 st.header('AIRPORT DATA MANAGEMENT SYSTEM')
-page = st.sidebar.selectbox("Pilih Menu", ["View Data","Edit Data"])
+page = st.sidebar.selectbox("Pilih Menu", ["View Data","Edit Data","Search Data"])
 
 if page == "View Data":
     data = conn.query('SELECT * FROM schedule ORDER By id;', ttl="0").set_index('id')
+    data = data.dropna()
     st.dataframe(data)
-
 if page == "Edit Data":
     password_attempt = st.text_input("Masukkan Kata Sandi", type="password")
+
     if password_attempt == "FPKELOMPOK8":
         # Tampilkan konten edit jika kata sandi benar
-        if st.button('Tambah Data'):
-            with conn.session as session:
-                query = text('INSERT INTO schedule (maskapai, bandara_asal, bandara_tujuan, waktu_keberangkatan, waktu_sampai, tanggal, gate_keberangkatan, status_penerbangan, layanan_pesawat, max_capacity) \
-                              VALUES (:1, :2, :3, :4, :5, :6, :7, :8, :9, :10);')
-                session.execute(query, {'1':'', '2':'', '3':'', '4':None, '5':None, '6':None, '7':'[]', '8':'[]', '9':'[]', '10':None })
-                session.commit()
-
         data = conn.query('SELECT * FROM schedule ORDER By id;', ttl="0")
         for _, result in data.iterrows():        
             id = result['id']
@@ -43,7 +36,7 @@ if page == "Edit Data":
             layanan_pesawat_lama = result["layanan_pesawat"]
             max_capacity_lama = result["max_capacity"]
 
-            with st.expander(f'a.n. {maskapai_lama}'):
+            with st.expander(f'Maskapai {maskapai_lama}'):
                 with st.form(f'data-{id}'):
                     bandara_asal_baru = st.text_input("bandara_asal", bandara_asal_lama)
                     maskapai_baru = st.selectbox("maskapai_name", list_maskapai, index= list_maskapai.index(maskapai_lama) if maskapai_lama in list_maskapai else 0)
@@ -52,11 +45,11 @@ if page == "Edit Data":
                     waktu_sampai_baru = st.time_input("waktu_sampai", waktu_sampai_lama)
                     tanggal_baru = st.date_input("tanggal", tanggal_lama)
                     gate_keberangkatan_baru = st.text_input("gate_keberangkatan", gate_keberangkatan_lama)
-                    status_penerbangan_baru = st.selectbox("status_penerbangan", list_status_penerbangan, list_status_penerbangan.index(status_penerbangan_lama))
+                    status_penerbangan_baru = st.selectbox("status_penerbangan",list_status_penerbangan,index=list_status_penerbangan.index(status_penerbangan_lama) if status_penerbangan_lama in list_status_penerbangan else 0)
                     layanan_pesawat_baru = st.multiselect("layanan_pesawat", ['Ekonomi', 'Bisnis', 'First Class'], eval(layanan_pesawat_lama))
                     max_capacity_baru = st.text_input("max_capacity", max_capacity_lama)
                     
-                    col1, col2 = st.columns([1, 7])
+                    col1, col2,col3 = st.columns([7, 7,7])
 
                     with col1:
                         if st.form_submit_button('UPDATE'):
@@ -69,13 +62,20 @@ if page == "Edit Data":
                                                         '5':waktu_sampai_baru, '6':tanggal_baru, '7':gate_keberangkatan_baru, '8':status_penerbangan_baru, '9':str(layanan_pesawat_baru), '10':max_capacity_baru, '11':id})
                                 session.commit()
                                 st.experimental_rerun()
-                    
                     with col2:
                         if st.form_submit_button('DELETE'):
-                            query = text(f'DELETE FROM schedule WHERE id=:1;')
-                            session.execute(query, {'1':id})
+                            query_delete = text(f'DELETE FROM schedule WHERE id=:1;')
+                            session.execute(query_delete, {'1': id})
                             session.commit()
-                            st.experimental_rerun()
-
+                    with col3:
+                        if st.form_submit_button('Tambah Data'):
+                            with conn.session as session:
+                                query = text('INSERT INTO schedule (maskapai, bandara_asal, bandara_tujuan, waktu_keberangkatan, waktu_sampai, tanggal, gate_keberangkatan, status_penerbangan, layanan_pesawat, max_capacity) \
+                                             VALUES (:1, :2, :3, :4, :5, :6, :7, :8, :9, :10);')
+                                session.execute(query, {'1':'', '2':'', '3':'', '4':None, '5':None, '6':None, '7':'', '8':'[]', '9':'[]', '10':None })
+                                session.commit()
+                                st.experimental_rerun()
     else:
         st.error("Kata Sandi Salah")
+
+
