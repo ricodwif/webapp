@@ -10,7 +10,7 @@ CREATE TABLE schedule (
     gate_keberangkatan text,
     status_penerbangan text,
     Layanan_pesawat text,
-    max_capacity integer);
+    max_capacity text);
 insert into schedule (	maskapai, bandara_asal,bandara_tujuan,tanggal, waktu_keberangkatan, waktu_sampai, gate_keberangkatan,
     status_penerbangan,Layanan_pesawat,max_capacity)
 values

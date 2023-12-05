@@ -1,5 +1,6 @@
 import streamlit as st
 from sqlalchemy import text
+import pandas as pd
 
 list_maskapai = ['Garuda Indonesia', 'Lion Air', 'Citilink', 'Batik Air', 'Sriwijaya Air', 'NAM Air', 'AirAsia Indonesia', 'Wings Air', 'TransNusa', 'Susi Air']
 list_status_penerbangan = ['', 'On Time', 'Delayed', 'Last call']
@@ -11,7 +12,7 @@ with conn.session as session:
                                                        waktu_keberangkatan time, waktu_sampai time, tanggal date, gate_keberangkatan text, status_penerbangan text, layanan_pesawat text, max_capacity varchar);')
     session.execute(query)
 st.header('AIRPORT DATA MANAGEMENT SYSTEM ✈️')
-menu_options = ["View Data", "Edit Data", "Search Data"]
+menu_options = ["View Data", "Edit Data", "Search Data","Grafik Penerbangan"]
 selected_options = st.selectbox("Pilih Menu", menu_options)
 
 if "View Data" in selected_options:
@@ -51,6 +52,7 @@ if "Edit Data" in selected_options:
                     status_penerbangan_baru = st.selectbox("status_penerbangan",list_status_penerbangan,index=list_status_penerbangan.index(status_penerbangan_lama) if status_penerbangan_lama in list_status_penerbangan else 0)
                     layanan_pesawat_baru = st.multiselect("layanan_pesawat", ['Ekonomi', 'Bisnis', 'First Class'], eval(layanan_pesawat_lama))
                     max_capacity_baru = st.text_input("max_capacity", max_capacity_lama)
+                    max_capacity_baru = str(max_capacity_baru)
                     
                     col1, col2,col3 = st.columns([7, 7,7])
 
@@ -75,7 +77,7 @@ if "Edit Data" in selected_options:
                             with conn.session as session:
                                 query = text('INSERT INTO schedule (maskapai, bandara_asal, bandara_tujuan, waktu_keberangkatan, waktu_sampai, tanggal, gate_keberangkatan, status_penerbangan, layanan_pesawat, max_capacity) \
                                              VALUES (:1, :2, :3, :4, :5, :6, :7, :8, :9, :10);')
-                                session.execute(query, {'1':'', '2':'', '3':'', '4':None, '5':None, '6':None, '7':'', '8':'[]', '9':'[]', '10':None })
+                                session.execute(query, {'1':'', '2':'', '3':'', '4':None, '5':None, '6':None, '7':'', '8':'[]', '9':'[]', '10':'' })
                                 session.commit()
                                 st.experimental_rerun()
     else:
@@ -128,3 +130,25 @@ if "Search Data" in selected_options:
                     st.dataframe(data)
         else:
             st.warning("Pilih opsi pencarian dan isi kolom pencarian.")
+if "Grafik Penerbangan" in selected_options:
+    st.header("Grafik Penerbangan")
+    with conn.session as session:
+        result = session.execute(text('SELECT * FROM schedule;'))
+        data = result.fetchall()
+    df = pd.DataFrame(data, columns=result.keys())
+    selected_aspect = st.selectbox("Grafik penerbangan berdasarkan", ["Maskapai", "Tanggal Keberangkatan", "Bandara Asal", "Bandara Tujuan"])
+    st.subheader(f"Visualisasi Data per {selected_aspect}")
+    if selected_aspect == "Maskapai":
+        aspect_counts = df['maskapai'].value_counts()
+        st.bar_chart(aspect_counts)
+    elif selected_aspect == "Tanggal Keberangkatan":
+        start_date = st.date_input("Start Date")
+        end_date = st.date_input("End Date")
+        filtered_df = df[(df['tanggal'] >= start_date) & (df['tanggal'] <= end_date)]
+        st.line_chart(filtered_df['tanggal'].value_counts())
+    elif selected_aspect == "Bandara Asal":
+        aspect_counts = df['bandara_asal'].value_counts()
+        st.bar_chart(aspect_counts)
+    elif selected_aspect == "Bandara Tujuan":
+        aspect_counts = df['bandara_tujuan'].value_counts()
+        st.bar_chart(aspect_counts)
