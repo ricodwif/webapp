@@ -21,7 +21,7 @@ if "View Data" in selected_options:
     data = conn.query('SELECT * FROM schedule ORDER By id;', ttl="0").set_index('id')
     data['max_capacity'] = data['max_capacity'].astype(str)  
     data = data.dropna()
-    st.dataframe(data.style.set_properties(**{'background-color': '#03045E', 'color': 'black'}))
+    st.dataframe(data.style.set_properties(**{'background-color': '#0096C7', 'color': 'black'}))
 if "Edit Data" in selected_options:
     st.header("Edit Data")
     password_attempt = st.text_input("Masukkan Kata Sandi", type="password")
