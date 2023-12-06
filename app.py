@@ -2,6 +2,7 @@ import streamlit as st
 from sqlalchemy import text
 import pandas as pd
 
+
 list_maskapai = ['Garuda Indonesia', 'Lion Air', 'Citilink', 'Batik Air', 'Sriwijaya Air', 'NAM Air', 'AirAsia Indonesia', 'Wings Air', 'TransNusa', 'Susi Air']
 list_status_penerbangan = ['', 'On Time', 'Delayed', 'Last call']
 
@@ -23,10 +24,15 @@ if "View Data" in selected_options:
     data = data.dropna()
     st.dataframe(data.style.set_properties(**{'background-color': '#0096C7', 'color': 'black'}))
 if "Edit Data" in selected_options:
-    st.header("Edit Data")
     password_attempt = st.text_input("Masukkan Kata Sandi", type="password")
-
     if password_attempt == "FPKELOMPOK8":
+        if st.button('Tambah Kolom Untuk Tambah Data'):
+            with conn.session as session:
+                query = text('INSERT INTO schedule (maskapai, bandara_asal, bandara_tujuan, waktu_keberangkatan, waktu_sampai, tanggal, gate_keberangkatan, status_penerbangan, layanan_pesawat, max_capacity) \
+                              VALUES (:1, :2, :3, :4, :5, :6, :7, :8, :9, :10);')
+                session.execute(query, {'1':'', '2':'', '3':'', '4':None, '5':None, '6':None, '7':'', '8':'[]', '9':'[]', '10':None })
+                session.commit()
+            st.success("Kolom baru berhasil ditambahkan!")
         data = conn.query('SELECT * FROM schedule ORDER By id;', ttl="0")
         for _, result in data.iterrows():        
             id = result['id']
@@ -53,10 +59,8 @@ if "Edit Data" in selected_options:
                     status_penerbangan_baru = st.selectbox("status_penerbangan",list_status_penerbangan,index=list_status_penerbangan.index(status_penerbangan_lama) if status_penerbangan_lama in list_status_penerbangan else 0)
                     layanan_pesawat_baru = st.multiselect("layanan_pesawat", ['Ekonomi', 'Bisnis', 'First Class'], eval(layanan_pesawat_lama))
                     max_capacity_baru = st.text_input("max_capacity", max_capacity_lama)
-                    max_capacity_baru = str(max_capacity_baru)
-                    
-                    col1, col2,col3 = st.columns([7, 7,7])
-
+                    max_capacity_baru = str(max_capacity_baru)   
+                    col1, col2 = st.columns([7, 7])
                     with col1:
                         if st.form_submit_button('UPDATE'):
                             with conn.session as session:
@@ -67,21 +71,14 @@ if "Edit Data" in selected_options:
                                 session.execute(query, {'1':maskapai_baru, '2':bandara_asal_baru, '3':bandara_tujuan_baru, '4':waktu_keberangkatan_baru, 
                                                         '5':waktu_sampai_baru, '6':tanggal_baru, '7':gate_keberangkatan_baru, '8':status_penerbangan_baru, '9':str(layanan_pesawat_baru), '10':max_capacity_baru, '11':id})
                                 session.commit()
-                                st.experimental_rerun()
+                            st.success("Data berhasil diperbarui!")
                     with col2:
                         if st.form_submit_button('DELETE'):
                             query_delete = text(f'DELETE FROM schedule WHERE id=:1;')
                             session.execute(query_delete, {'1': id})
                             session.commit()
-                    with col3:
-                        if st.form_submit_button('Tambah Data'):
-                            with conn.session as session:
-                                query = text('INSERT INTO schedule (maskapai, bandara_asal, bandara_tujuan, waktu_keberangkatan, waktu_sampai, tanggal, gate_keberangkatan, status_penerbangan, layanan_pesawat, max_capacity) \
-                                             VALUES (:1, :2, :3, :4, :5, :6, :7, :8, :9, :10);')
-                                session.execute(query, {'1':'', '2':'', '3':'', '4':None, '5':None, '6':None, '7':'', '8':'[]', '9':'[]', '10':'' })
-                                session.commit()
-                                st.experimental_rerun()
-    else:
+                            st.success("Data berhasil dihapus!")
+    else:           
         st.error("Kata Sandi Salah")
 if "Search Data" in selected_options:
     st.header("Search Data")
@@ -139,9 +136,13 @@ if "Grafik Penerbangan" in selected_options:
     df = pd.DataFrame(data, columns=result.keys())
     selected_aspect = st.selectbox("Grafik penerbangan berdasarkan", ["Maskapai", "Tanggal Keberangkatan", "Bandara Asal", "Bandara Tujuan"])
     st.subheader(f"Visualisasi Data per {selected_aspect}")
+
     if selected_aspect == "Maskapai":
-        aspect_counts = df['maskapai'].value_counts()
+        df = pd.DataFrame(data, columns=result.keys())
+        filtered_df = df[df['maskapai'].notnull() & (df['maskapai'] != '')]
+        aspect_counts = filtered_df['maskapai'].value_counts()
         st.bar_chart(aspect_counts)
+
     elif selected_aspect == "Tanggal Keberangkatan":
         start_date = st.date_input("Start Date")
         end_date = st.date_input("End Date")
